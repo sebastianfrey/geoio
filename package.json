@@ -1,0 +1,25 @@
+{
+  "name": "geoio",
+  "version": "0.0.1",
+  "description": "A small Geo IO library.",
+  "main": "geoio.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastianfrey/geoio.git"
+  },
+  "keywords": [
+    "js",
+    "geo",
+    "io",
+    "shape"
+  ],
+  "author": "sfrey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sebastianfrey/geoio/issues"
+  },
+  "homepage": "https://github.com/sebastianfrey/geoio#readme"
+}
