@@ -1,0 +1,87 @@
+@font-face { 
+  font-family: "Roboto"; 
+  src: url("./fonts/Roboto-Thin.ttf"); 
+}
+
+body, html, #root {
+  width: 100%;
+  height: 100%;
+  margin: auto 0;
+  background-color: whitesmoke;
+  font-family: Roboto;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  flex-direction: column;
+}
+
+.header {
+  height: 3.125rem;
+  background-color: #214F63;
+  display: flex;
+  align-items: center;
+}
+
+.header .title {
+  color: white;
+  font-weight: bold;
+  font-size: 2rem;
+  margin-left: 2rem;  
+}
+
+.app-container {
+  display: flex;
+  flex: 1;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;  
+}
+
+
+
+.table {
+  height: 15.625rem;
+  border-top: 0.125rem solid #CCCCCC;
+}
+
+.map-controller {
+  flex: 1;
+}
+
+.map-controller .map-node {
+  height: 100%;
+  width: 100%;
+}
+
+.layer {
+  width: 15.625rem;
+  border-right: 0.125rem solid #CCCCCC;
+}
+
+.leaflet-tile-pane {
+  -webkit-filter: grayscale(100%);
+  filter: grayscale(100%);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background-color: whitesmoke;
+  color: #214F63;
+  font-size: small;
+}
+
+.layer .title {
+
+}
+
+@media (max-width: 480px) {
+  .main {
+    flex-direction: column;
+  }
+}
