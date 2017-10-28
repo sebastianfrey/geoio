@@ -3,7 +3,13 @@ import Table from './Table';
 import Header from './Header';
 import Layer from './Layer';
 import MapController from './MapController';
-import SplitterLayout from 'react-splitter-layout';
+import { createStore } from 'redux';
+
+function  layerReduxer(layers = [], action) {
+
+};
+
+const layerStore = createStore(layerReduxer);
 
 export default class Application extends React.Component {
   render() {
@@ -13,7 +19,7 @@ export default class Application extends React.Component {
         <div className="app-container">
           <Layer /> 
           <div className="content-container">
-            <MapController />
+            <MapController layerStore={layerStore} />
             <Table />
           </div>    
         </div>

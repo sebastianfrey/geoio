@@ -1,12 +1,26 @@
 import React from 'react';
 import DropZone from 'react-dropzone';
 
-import { Map, Marker, Popup, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import { Map, Marker, Popup, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
 
-let ShapeServiceWorker = require('worker!./workers/ShapeService.worker.js');
+import GeoJsonCluster from './leaflet/GeoJSONCLuster.js';
 
-const position = [51.505, -0.09];
+import ShapeServiceWorker from './workers/ShapeService.worker.js';
+
+const position = [27.4928779, 89.3581967];
 const accept = '.shp';
+
+var layerIdx = 0;
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
 
 export default class MapController extends React.Component {
   constructor() {
@@ -14,7 +28,8 @@ export default class MapController extends React.Component {
     this.state = {
       accept: accept,
       files: [],
-      dropzoneActive: false
+      dropzoneActive: false,
+      layers: []
     }
   }
 
@@ -44,21 +59,44 @@ export default class MapController extends React.Component {
       var reader = new FileReader();
       reader.onload = () => {
         let worker = new ShapeServiceWorker();
-        worker.onmessage = this.handleMessage.bind(this, worker);
+        worker.onmessage = this.handleMessage.bind(this, worker, file);
         worker.postMessage(reader.result);
       };
       reader.readAsArrayBuffer(file);
     });
   }
 
-  handleMessage(worker, result) {
-    worker.close();
-    console.log(result);
+  handleMessage(worker, file, result) {
+    worker.terminate();
+    let parts = file.name.split(".");
+    parts.pop();
+    result.layer = parts.join(",");
+    this.addGeoJSONLayer(result.data);
+  }
+
+  addGeoJSONLayer(data) {
+    const { layers } = this.state;
+    let layer = {
+      id: layerIdx++,
+      type: "GeoJSONLayer",
+      name: data.layer,
+      data: data.features,
+      extent: { xmin: data.xmin, ymin: data.ymin, xmax: data.xmax, ymax: data.ymax },
+      color: getRandomColor()
+    }
+
+    if (layers.some((lyr) => lyr.name === layer.name)) return;
+
+    layers.push(layer);
+
+    this.setState({
+      layers: layers
+    });
   }
 
 
   render() {
-    const { accept, files, dropzoneActive } = this.state;
+    const { accept, layers, dropzoneActive } = this.state;
     const overlayStyle = {
       position: 'absolute',
       top: 0,
@@ -70,6 +108,7 @@ export default class MapController extends React.Component {
       textAlign: 'center',
       color: '#fff'
     };
+
     return (
       <DropZone className="map-controller"
         disableClick
@@ -83,11 +122,19 @@ export default class MapController extends React.Component {
               url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             />
-            <Marker position={position}>
-              <Popup>
-                <span>A pretty CSS3 popup.<br/>Easily customizable.</span>
-              </Popup>
-            </Marker>
+            {
+              layers.map(layer => {
+
+                return (
+                  <GeoJSON
+                    key={layer.id}
+                    pointToLayer={(feature, latlng) => {
+                      return L.circleMarker(latlng, { fillColor: layer.color, color: layer.color });
+                    }}
+                    data={layer.data} />
+                );
+              })
+            }
           </Map>
       </DropZone>
     );
