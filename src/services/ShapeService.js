@@ -5,7 +5,7 @@ const POLYGON = 5;
 const MULTIPOINT = 8;
 const POINTZ = 11;
 const POLYLINEZ = 13;
-const POLYLGONZ = 15;
+const POLYGONZ = 15;
 const MULTIPOINTZ = 18;
 const POINTM = 21;
 const POLYLINEM = 23;
@@ -13,11 +13,12 @@ const POLYGONM = 25;
 const MULTIPOINTM = 28;
 const MULTIPATCH = 31;
 
-const ShapeTypes = {
+export const ShapeTypes = {
   NULL,
   POINT, POLYLINE, POLYGON, MULTIPOINT,
   POINTZ, POLYLINEZ, POLYGONZ, MULTIPOINTZ,
-  POINTM, POLYLINEM, POLYGONM, MULTIPOINTM
+  POINTM, POLYLINEM, POLYGONM, MULTIPOINTM,
+  MULTIPATCH
 };
 
 const SHAPE_FILE_CODE = 9994;
@@ -36,7 +37,7 @@ function checkFileLength(view) {
 
   let contentLength = view.getInt32(24) * 2;
 
-  if (view.getInt32(24) * 2 !== view.byteLength) {
+  if (contentLength !== view.byteLength) {
     throw new Error(`Content length in the header section differs from file size.`);
   }
 }
@@ -88,62 +89,79 @@ function readShape(view) {
   let xmax = view.getFloat64(52, true);
   let ymax = view.getFloat64(60, true);
 
-  let geometries = [];
+  let features = [];
 
   if (view.byteLength > 100) {
     // invoke reader
     switch (shapeType) {
       
       case POINT: {
-        geometries = readPoints(view);
+        features = readPoints(view).map(featureMapper);
         break;
       }
 
       case POLYLINE: {
-        geometries = readPolyline(view);
+        features = readPolyline(view);
         break;
       }
 
       case POLYGON: {
-        geometries = readPolyogon(view);
+        features = readPolygon(view);
         break;
       }
+
+      default: {}
     }
   }
 
   let type = "FeatureCollection";
 
-  return {xmin,ymin,xmax,ymax,geometries,type};
+  return {xmin,ymin,xmax,ymax,features,type};
+}
+
+function featureMapper(geometry) {
+  let type = "Feature";
+  return {type, geometry};
 }
 
 function readPoints(view) {
-  let geometries = [], i = 96;
-
+  let geometries = [], i = 100;
   while (i < view.byteLength) {
-    let point = readPoint(view, i);
-    if (point) geometries.push(point);
+    i = readPoint(view, geometries, i);
   }
 
   return geometries;
 }
 
-function readPoint(view, i) {
+function readPoint(view, geometries, i) {
   // get the record number
-  let recordNumber = view.getInt32(i+=4);
+  let recordNumber = view.getInt32(i);
+  i+=4;
+
   // again the content length is store as 16 bit word.
-  let contentLength = view.getInt32(i+=4) * 2;
+  let contentLength = view.getInt32(i) * 2;
+  i+=4;
+
   // the records shape type
-  let shapeType = view.getInt32(i+=4, true);
+  let shapeType = view.getInt32(i, true);
+  i+=4;
 
   if (shapeType !== POINT) return;
 
-  return readXY(view, i);
+  // construct empty point
+  let point = { type: "Point", coordinates: [] };
+
+  // add empty point to geometries list
+  geometries.push(point);
+
+  // fill empty point
+  return readXY(view, point.coordinates, i, true);
 }
 
 
 function readPolyline(view) {
   let geometries = [], i = 100;
-
+  
   return geometries;
 }
 
@@ -153,14 +171,17 @@ function readPolygon(view) {
   return geometries;
 }
 
-function readXY(view, i, returnAsArray) {
-  let x = view.getFloat64(i+=8);
-  let y = view.getFloat64(i+=8);
+function readXY(view, coordinates, i, isPoint) {
+  // read x coordinate
+  let x = view.getFloat64(i, true);
+  i+=8;
+  // read y coordinate
+  let y = view.getFloat64(i, true);
+  i+=8;
 
-  if (returnAsArray)
-    return [x, y];
-  else
-    return {x, y};
+  isPoint ? coordinates.push(x, y) : coordinates.push([x, y]);
+
+  return i;
 }
 
 function readRecordHeader(view) {
