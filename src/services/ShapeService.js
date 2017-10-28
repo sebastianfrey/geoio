@@ -90,23 +90,26 @@ function readShape(view) {
   let ymax = view.getFloat64(60, true);
 
   let features = [];
-
+  let geometryType = "";
   if (view.byteLength > 100) {
     // invoke reader
     switch (shapeType) {
       
       case POINT: {
         features = readPoints(view).map(featureMapper);
+        geometryType = "Point";
         break;
       }
 
       case POLYLINE: {
-        features = readPolyline(view);
+        features = readPolylines(view).map(featureMapper);
+        geometryType = "MultiLineString";
         break;
       }
 
       case POLYGON: {
-        features = readPolygon(view);
+        features = readPolygons(view).map(featureMapper);
+        geometryType = "MultiPolygon";
         break;
       }
 
@@ -116,12 +119,14 @@ function readShape(view) {
 
   let type = "FeatureCollection";
 
-  return {xmin,ymin,xmax,ymax,features,type};
+  let extent = {xmin,ymin,xmax,ymax}
+
+  return {extent,features,type,geometryType};
 }
 
 function featureMapper(geometry) {
   let type = "Feature";
-  return {type, geometry};
+  return {type, geometry, properties: {}};
 }
 
 function readPoints(view) {
@@ -134,13 +139,8 @@ function readPoints(view) {
 }
 
 function readPoint(view, geometries, i) {
-  // get the record number
-  let recordNumber = view.getInt32(i);
-  i+=4;
-
-  // again the content length is store as 16 bit word.
-  let contentLength = view.getInt32(i) * 2;
-  i+=4;
+  let recordHeader = {};
+  i = readRecordHeader(view, recordHeader, i);
 
   // the records shape type
   let shapeType = view.getInt32(i, true);
@@ -159,16 +159,117 @@ function readPoint(view, geometries, i) {
 }
 
 
-function readPolyline(view) {
+function readPolylines(view) {
   let geometries = [], i = 100;
-  
+
+  while(i < view.byteLength) {
+    i = readPolyline(view, geometries, i);
+  }
+
   return geometries;
 }
 
-function readPolygon(view) {
+function readPolyline(view, geometries, i) {
+  let recordHeader = {};
+  i = readRecordHeader(view, recordHeader, i);
+
+  // the records shape type
+  let shapeType = view.getInt32(i, true);
+  i+=4;
+
+  if (shapeType !== POLYLINE) return;
+
+  // the polylines extent
+  let xmin = view.getFloat64(i, true);
+  i+=8;
+  let xmax = view.getFloat64(i, true);
+  i+=8;
+  let ymin = view.getFloat64(i, true);
+  i+=8;
+  let ymax = view.getFloat64(i, true);
+  i+=8;
+
+  // the paths of this polyline
+  let pathCount = view.getInt32(i, true);
+  i+=4;
+  // the total number of points of this polyline
+  let vertexCount = view.getInt32(i, true);
+  i+=4;
+
+  let polyline = { type: "MultiLineString", coordinates: [] };
+
+  geometries.push(polyline);
+
+  return readSegments(view, polyline.coordinates, pathCount, vertexCount, i);
+}
+
+function readSegments(view, segments, segmentCount, vertexCount, i) {
+  let segmentIndex = i + segmentCount * 4;
+  let _segmentIndex = segmentIndex;
+  let _vertexCount = vertexCount;
+
+  for (let j = segmentCount; j >= 1; j--)
+  {
+    segmentIndex-=4;
+    let segmentStart = view.getInt32(segmentIndex, true);
+    let segment = [];
+
+    for (let k = segmentStart; k < vertexCount; k++) {
+      let vertexStart = _segmentIndex + 2 * k * 8;
+      readXY(view, segment, vertexStart);
+    }
+
+    vertexCount = vertexCount - (vertexCount - segmentStart);
+
+    segments.push(segment);
+  }
+
+  return i + segmentCount * 4 + 2 * _vertexCount * 8;
+}
+
+
+function readPolygons(view) {
   let geometries = [], i = 100;  
 
+  while(i < view.byteLength) {
+    i = readPolygon(view, geometries, i);
+  }
+
   return geometries;
+}
+
+function readPolygon(view, geometries, i) {
+  let recordHeader = {};
+  i = readRecordHeader(view, recordHeader, i);
+
+  // the records shape type
+  let shapeType = view.getInt32(i, true);
+  i+=4;
+
+  if (shapeType !== POLYGON) return;
+
+  // the polylines extent
+  let xmin = view.getFloat64(i, true);
+  i+=8;
+  let xmax = view.getFloat64(i, true);
+  i+=8;
+  let ymin = view.getFloat64(i, true);
+  i+=8;
+  let ymax = view.getFloat64(i, true);
+  i+=8;
+
+  // the paths of this polyline
+  let ringCount = view.getInt32(i, true);
+  i+=4;
+  // the total number of points of this polyline
+  let vertexCount = view.getInt32(i, true);
+  i+=4;
+
+  let poylgon = { type: "Polygon", coordinates: [] };
+
+  geometries.push(poylgon);
+
+  return readSegments(view, poylgon.coordinates, ringCount, vertexCount, i);
 }
 
 function readXY(view, coordinates, i, isPoint) {
@@ -184,8 +285,16 @@ function readXY(view, coordinates, i, isPoint) {
   return i;
 }
 
-function readRecordHeader(view) {
+function readRecordHeader(view, recordHeader, i) {
+  // get the record number
+  recordHeader.recordNumber = view.getInt32(i);
+  i+=4;
 
+  // again the content length is store as 16 bit word.
+  recordHeader.contentLength = view.getInt32(i) * 2;
+  i+=4;
+
+  return i;
 }
 
 export default class ShapeReader {
