@@ -1,15 +1,16 @@
 import React from 'react';
-import Table from './Table';
-import Header from './Header';
-import Layer from './Layer';
-import MapController from './MapController';
+
 import { createStore } from 'redux';
 
-function  layerReduxer(layers = [], action) {
+import Table from './Table';
+import Header from './Header';
+import LayerController from './LayerController';
 
-};
+import MapController from './MapController';
 
-const layerStore = createStore(layerReduxer);
+import { layerManager } from './map/reducers';
+
+const layerStore = createStore(layerManager);
 
 export default class Application extends React.Component {
   render() {
@@ -17,7 +18,7 @@ export default class Application extends React.Component {
       <div className="main">
         <Header  title="GeoIO"/>
         <div className="app-container">
-          <Layer /> 
+          <LayerController title={"Table of Contents"}layerStore={layerStore} /> 
           <div className="content-container">
             <MapController layerStore={layerStore} />
             <Table />

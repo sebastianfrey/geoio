@@ -4,9 +4,9 @@ import DropZone from 'react-dropzone';
 import L from 'leaflet';
 import { Map, Marker, Popup, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
 
-import GeoJsonCluster from './leaflet/GeoJSONCLuster.js';
-
 import ShapeServiceWorker from './workers/ShapeService.worker.js';
+
+import { ADD_LAYER, REMOVE_LAYER, addLayer, removeLayer  } from './map/actions';
 
 const position = [27.4928779, 89.3581967];
 const accept = '.shp';
@@ -23,14 +23,22 @@ function getRandomColor() {
 }
 
 export default class MapController extends React.Component {
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
       accept: accept,
       files: [],
       dropzoneActive: false,
       layers: []
     }
+    this.layerStore = this.props.layerStore;
+    this.layerStore.subscribe(this.layerStoreListener.bind(this));
+    
+  }
+
+  layerStoreListener() {
+    const { layers } = this.layerStore.getState();
+    this.setState({ layers });
   }
 
   onDragEnter() {
@@ -70,33 +78,30 @@ export default class MapController extends React.Component {
     worker.terminate();
     let parts = file.name.split(".");
     parts.pop();
-    result.layer = parts.join(",");
+    result.data.layer = parts.join(",");
     this.addGeoJSONLayer(result.data);
   }
 
-  addGeoJSONLayer(data) {
-    const { layers } = this.state;
-    let layer = {
-      id: layerIdx++,
-      type: "GeoJSONLayer",
-      name: data.layer,
-      data: data.features,
-      extent: { xmin: data.xmin, ymin: data.ymin, xmax: data.xmax, ymax: data.ymax },
-      color: getRandomColor()
-    }
+  addGeoJSONLayer(featureSet) {
+    this.layerStore.dispatch(
+      addLayer({
+        type: "GeoJSONLayer",
+        name: featureSet.layer,
+        data: featureSet.features,
+        geometryType: featureSet.geometryType,
+        visible: true,
+        extent: featureSet.extent,
+        color: getRandomColor()
+      })
+    );
 
-    if (layers.some((lyr) => lyr.name === layer.name)) return;
-
-    layers.push(layer);
-
-    this.setState({
-      layers: layers
-    });
+    const { layers } = this.layerStore.getState();
+    this.setState({ layers });
   }
 
 
   render() {
-    const { accept, layers, dropzoneActive } = this.state;
+    const { accept, dropzoneActive, layers } = this.state;
     const overlayStyle = {
       position: 'absolute',
       top: 0,
@@ -123,17 +128,29 @@ export default class MapController extends React.Component {
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             />
             {
-              layers.map(layer => {
+              layers
+                .filter(layer => layer.visible)
+                .map(layer => {
 
-                return (
-                  <GeoJSON
-                    key={layer.id}
-                    pointToLayer={(feature, latlng) => {
-                      return L.circleMarker(latlng, { fillColor: layer.color, color: layer.color });
-                    }}
-                    data={layer.data} />
-                );
-              })
+                  return (
+                    layer.geometryType === "Point" ?
+                      <GeoJSON
+                        key={layer.id}
+                        pointToLayer={(feature, latlng) => {
+                          return L.circleMarker(latlng, { fillColor: layer.color, color: layer.color });
+                        }}
+                        data={layer.data} />
+                      :
+                      <GeoJSON
+                        key={layer.id}
+                        style={() => {
+                          return {
+                            color: layer.color,
+                          };
+                        }}
+                        data={layer.data} />
+                  );
+                })
             }
           </Map>
       </DropZone>
