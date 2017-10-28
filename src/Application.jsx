@@ -1,8 +1,8 @@
 import React from 'react';
-import Table from './Table.jsx';
-import Header from './Header.jsx';
-import Layer from './Layer.jsx';
-import MapController from './MapController.jsx';
+import Table from './Table';
+import Header from './Header';
+import Layer from './Layer';
+import MapController from './MapController';
 import SplitterLayout from 'react-splitter-layout';
 
 export default class Application extends React.Component {

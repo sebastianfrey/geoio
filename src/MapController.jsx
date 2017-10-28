@@ -3,13 +3,16 @@ import DropZone from 'react-dropzone';
 
 import { Map, Marker, Popup, TileLayer } from 'react-leaflet';
 
+let ShapeServiceWorker = require('worker!./workers/ShapeService.worker.js');
+
 const position = [51.505, -0.09];
+const accept = '.shp';
 
 export default class MapController extends React.Component {
   constructor() {
     super()
     this.state = {
-      accept: '',
+      accept: accept,
       files: [],
       dropzoneActive: false
     }
@@ -32,7 +35,27 @@ export default class MapController extends React.Component {
       files,
       dropzoneActive: false
     });
+
+    this.handleDrop(files);
   }
+
+  handleDrop(acceptedFiles, rejectedFiles) {
+    acceptedFiles.forEach((file) => {
+      var reader = new FileReader();
+      reader.onload = () => {
+        let worker = new ShapeServiceWorker();
+        worker.onmessage = this.handleMessage.bind(this, worker);
+        worker.postMessage(reader.result);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  handleMessage(worker, result) {
+    worker.close();
+    console.log(result);
+  }
+
 
   render() {
     const { accept, files, dropzoneActive } = this.state;
