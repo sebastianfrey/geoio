@@ -78,7 +78,7 @@ export default class MapController extends React.Component {
     worker.terminate();
     let parts = file.name.split(".");
     parts.pop();
-    result.data.layer = parts.join(",");
+    result.data.layer = parts.join(".");
     this.addGeoJSONLayer(result.data);
   }
 
