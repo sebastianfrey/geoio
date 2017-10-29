@@ -1,3 +1,12 @@
+export function random() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
 export function hexToRgb(hex) {
   let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
@@ -7,7 +16,13 @@ export function hexToRgb(hex) {
   } : null;
 }
 
-export function rbgToCss(rgb, a) {
+export function rgbToCss(rgb, a) {
   let {r,g,b} = rgb;
   return `rgb${a != null ? 'a' : ''}(${r},${g},${b}${a != null ? ',' + a : ''})`;
 }
+
+export default {
+  random,
+  hexToRgb,
+  rgbToCss
+};

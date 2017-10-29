@@ -10,6 +10,10 @@ import MapController from './MapController';
 
 import { layerManager } from './map/reducers';
 
+import Dropable from './Dropable';
+
+const DropableMapController = Dropable(MapController);
+
 const layerStore = createStore(layerManager);
 
 export default class Application extends React.Component {
@@ -18,9 +22,12 @@ export default class Application extends React.Component {
       <div className="main">
         <Header  title="GeoIO"/>
         <div className="app-container">
-          <LayerController title={"Table of Contents"}layerStore={layerStore} /> 
+          <LayerController
+            title={"Table of Contents"}
+            layerStore={layerStore}
+            right={true}/> 
           <div className="content-container">
-            <MapController layerStore={layerStore} />
+            <DropableMapController layerStore={layerStore} />
             <Table />
           </div>    
         </div>
