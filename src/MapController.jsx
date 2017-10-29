@@ -69,20 +69,21 @@ export default class MapController extends React.Component {
         />
         {
           layers
+            .reverse()
             .filter(layer => layer.visible)
-            .map(layer => {
+            .map((layer, i) => {
 
               return (
                 layer.geometryType === "Point" ?
                   <GeoJSON
-                    key={layer.id}
+                    key={`${layer.id}_${i}`}
                     pointToLayer={(feature, latlng) => {
                       return L.circleMarker(latlng, { fillColor: layer.color, color: layer.color });
                     }}
                     data={layer.data} />
                   :
                   <GeoJSON
-                    key={layer.id}
+                    key={`${layer.id}_${i}`}
                     style={() => {
                       return {
                         color: layer.color,
