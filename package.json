@@ -60,6 +60,7 @@
     "react-dev-utils": "^4.1.0",
     "react-dom": "^16.0.0",
     "react-dropzone": "^4.2.1",
+    "react-icons-kit": "^1.0.7",
     "react-leaflet": "^1.7.1",
     "react-redux": "^5.0.6",
     "react-splitter-layout": "^3.0.0",
