@@ -24,6 +24,15 @@ export default class MapController extends React.Component {
     this.layerStore.subscribe(this.layerStoreListener.bind(this));
   }
 
+  componentDidUpdate() {
+    const { map } = this.refs;
+    const layers = map.leafletElement._layers;
+
+    Object.values(layers)
+      .filter(layer => layer.options.zIndex)
+      .sort((a, b) => a.options.zIndex - b.options.zIndex);
+  }
+
   layerStoreListener() {
     const { layers, extent } = this.layerStore.getState();
     this.setState({ layers, extent });
@@ -62,7 +71,7 @@ export default class MapController extends React.Component {
     layers = layers.map(layer => Object.assign({}, layer));
     
     return (
-      <Map className="map-controller" bounds={extent}>
+      <Map className="map-controller" bounds={extent} ref="map">
         <TileLayer
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -76,19 +85,21 @@ export default class MapController extends React.Component {
               return (
                 layer.geometryType === "Point" ?
                   <GeoJSON
-                    key={`${layer.id}_${i}`}
+                    key={layer.id}
                     pointToLayer={(feature, latlng) => {
-                      return L.circleMarker(latlng, { fillColor: layer.color, color: layer.color });
+                      return L.circleMarker(latlng, { fillColor: layer.color, color: layer.color, zIndex: i });
                     }}
+                    options={{zIndex: i }}
                     data={layer.data} />
                   :
                   <GeoJSON
-                    key={`${layer.id}_${i}`}
+                    key={layer.id}
                     style={() => {
                       return {
-                        color: layer.color,
+                        color: layer.color
                       };
                     }}
+                    options={{zIndex: i }}
                     data={layer.data} />
               );
             })

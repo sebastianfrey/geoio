@@ -1,4 +1,4 @@
-import { ADD_LAYER, REMOVE_LAYER, TOGGLE_LAYER,
+import { ADD_LAYER, REMOVE_LAYER, UPDATE_LAYER, TOGGLE_LAYER,
   ZOOM_TO_LAYER, MOVE_LAYER_DOWN, MOVE_LAYER_UP } from './actions';
 
 import L from 'leaflet';
@@ -32,6 +32,20 @@ export function layerManager(state = initialState, action) {
       return Object.assign({}, state, {
         layers: state.layers.filter((layer) => {
           return action.id !== layer.id;
+        })
+      });
+    }
+
+    case UPDATE_LAYER: {
+      return Object.assign({}, state, {
+        layers: state.layers.map((layer) => {
+          let opts = {};
+
+          if (layer.id === action.id) {
+            opts = Object.assign(opts, action.options);
+          }
+
+          return Object.assign({}, layer, opts);
         })
       });
     }

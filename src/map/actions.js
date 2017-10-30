@@ -1,5 +1,6 @@
 export const ADD_LAYER = 'ADD_LAYER';
 export const REMOVE_LAYER = 'REMOVE_LAYER';
+export const UPDATE_LAYER = 'UPDATE_LAYER';
 export const MOVE_LAYER_UP = 'MOVE_LAYER_UP';
 export const MOVE_LAYER_DOWN = 'MOVE_LAYER_DOWN';
 export const TOGGLE_LAYER = 'TOGGLE_LAYER';
@@ -9,6 +10,14 @@ export function addLayer(layer) {
   return {
     type: ADD_LAYER,
     layer
+  }
+}
+
+export function updateLayer(id, changes) {
+  return {
+    type: UPDATE_LAYER,
+    id,
+    changes
   }
 }
 

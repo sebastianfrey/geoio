@@ -121,12 +121,15 @@ button:focus {
 
 
 .layer-controller .layer-name {
-  background: none;
-  border: none;
-  color: #214F63;
   flex: 1;
   font-family: Roboto;
   font-weight: bold;
+}
+
+.layer-controller .layer-name:not(.active) {
+  background: none;
+  border: none;
+  color: #214F63;
 }
 
 .layer-controller .layer-menu {

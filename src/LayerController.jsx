@@ -7,7 +7,7 @@ import L from 'leaflet';
 import { hexToRgb, rgbToCss } from './colorUtil';
 
 import { toggleLayer, removeLayer, zoomToLayer,
-  moveLayerDown, moveLayerUp } from './map/actions';
+  moveLayerDown, moveLayerUp, updateLayer } from './map/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
 
@@ -16,7 +16,8 @@ export default class LayerController extends React.Component {
     super(props);
     this.state = {
       layers: [],
-      title: props.title
+      title: props.title,
+      nameInputActive: false
     };
     this.layerStore = props.layerStore;
     this.layerStore.subscribe(this.layerStoreListener.bind(this));
@@ -84,6 +85,40 @@ class LayerElement extends React.Component {
     });
   }
 
+  onLayerNameDoubleClick(layer) {
+    const { nameInputActive } = this.state;
+    
+    if (nameInputActive) return;
+
+    this.setState({
+      nameInputActive: true
+    });
+  }
+
+  onLayerNameChange(id, e) {
+    const { nameInputActive } = this.state;
+    let { value } = e.target;
+    const { nameInput } = this.refs;
+
+    if (!nameInputActive) return;
+
+    if (value === "") {
+      value = nameInput.defaultValue;      
+    }
+    
+    this.layerStore.dispatch(updateLayer(id, { name: value }));
+    
+    this.setState({
+      nameInputActive: false
+    });
+  }
+
+  onLayerNameKeyDown(id, e) {
+    if (e.keyCode !== 13) return;
+
+    this.onLayerNameChange(id, e);
+  }
+
   removeLayer(id) {
     this.layerStore.dispatch(removeLayer(id));
   }
@@ -106,7 +141,7 @@ class LayerElement extends React.Component {
   render() {
 
     const { layer, layerIdx } = this.props;
-    const { active, layerCount } = this.state;
+    const { active, layerCount, nameInputActive } = this.state;
 
     let isFirst = layerIdx > 0;
     let isLast = layerIdx + 1 < layerCount;
@@ -118,6 +153,9 @@ class LayerElement extends React.Component {
     let boundedZoomToLayer = this.zoomToLayer.bind(this, layer.extent);
     let boundedMoveLayerUp = this.moveLayerUp.bind(this, layer.id);
     let boundedMoveLayerDown = this.moveLayerDown.bind(this, layer.id);
+    let boundedLayerNameDblClick = this.onLayerNameDoubleClick.bind(this, layer);
+    let boundedLayerNameChange = this.onLayerNameChange.bind(this, layer.id);
+    let boundedLayerNameKeyDown = this.onLayerNameKeyDown.bind(this, layer.id);
     let boundedOnHide = this.onHide.bind(this);
     let boundedOnShow = this.onShow.bind(this);
 
@@ -125,7 +163,13 @@ class LayerElement extends React.Component {
       <div className={`layer-entry ${active ? 'active' : ''}`}>
         <input type="checkbox" checked={layer.visible} onChange={boundedToggleLayer}/>
         <div className="layer-color" style={{backgroundColor: rgba, borderColor:layer.color}}/>
-        <input className="layer-name" type="text" value={layer.name} readOnly/>
+        <input className={`layer-name ${nameInputActive ? 'active' : ''}`} type="text"
+          ref="nameInput"
+          defaultValue={layer.name}
+          onDoubleClick={boundedLayerNameDblClick}
+          onBlur={boundedLayerNameChange}
+          onKeyDown={boundedLayerNameKeyDown}
+          readOnly={!nameInputActive} />
         <DropDownIcon iconSize={20}
           onHide={boundedOnHide}
           onShow={boundedOnShow}

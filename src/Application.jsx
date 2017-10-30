@@ -28,7 +28,6 @@ export default class Application extends React.Component {
             right={true}/> 
           <div className="content-container">
             <DropableMapController layerStore={layerStore} />
-            <Table />
           </div>    
         </div>
       </div>
