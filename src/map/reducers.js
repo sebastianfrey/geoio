@@ -1,4 +1,4 @@
-import { ADD_LAYER, REMOVE_LAYER, UPDATE_LAYER, TOGGLE_LAYER,
+import { ADD_LAYER, REMOVE_LAYER, UPDATE_LAYER, EDIT_LAYER, TOGGLE_LAYER,
   ZOOM_TO_LAYER, MOVE_LAYER_DOWN, MOVE_LAYER_UP } from './actions';
 
 import L from 'leaflet';
@@ -11,7 +11,8 @@ bounds = L.latLngBounds(corner1, corner2);
 
 const initialState = {
   layers: [],
-  extent: bounds
+  extent: bounds,
+  editableLayer: -1
 }
 
 export function layerManager(state = initialState, action) {
@@ -30,11 +31,21 @@ export function layerManager(state = initialState, action) {
 
     case REMOVE_LAYER: {
       return Object.assign({}, state, {
-        layers: state.layers.filter((layer) => {
+        layers: state.layers
+          .filter((layer) => {
           return action.id !== layer.id;
-        })
+          }).map((layer) => {
+            return Object.assign({}, layer);
+          })
       });
     }
+
+    case EDIT_LAYER: {
+      return Object.assign({}, state, {
+        editableLayer: action.id
+      });
+    }
+
 
     case UPDATE_LAYER: {
       return Object.assign({}, state, {

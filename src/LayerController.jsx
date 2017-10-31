@@ -7,7 +7,7 @@ import L from 'leaflet';
 import { hexToRgb, rgbToCss } from './colorUtil';
 
 import { toggleLayer, removeLayer, zoomToLayer,
-  moveLayerDown, moveLayerUp, updateLayer } from './map/actions';
+  moveLayerDown, moveLayerUp, updateLayer, editLayer } from './map/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
 
@@ -16,8 +16,7 @@ export default class LayerController extends React.Component {
     super(props);
     this.state = {
       layers: [],
-      title: props.title,
-      nameInputActive: false
+      title: props.title
     };
     this.layerStore = props.layerStore;
     this.layerStore.subscribe(this.layerStoreListener.bind(this));
@@ -39,7 +38,11 @@ export default class LayerController extends React.Component {
           {
             layers.map((layer, i) => {
               return (
-                <LayerElement key={layer.id} layerIdx={i} layerStore= {this.layerStore} layer={layer}></LayerElement>
+                <LayerElement
+                  key={layer.id}
+                  layerIdx={i}
+                  layerStore= {this.layerStore}
+                  layer={layer} />
               );
             })
           }
@@ -54,7 +57,9 @@ class LayerElement extends React.Component {
     super(props);
     this.state = {
       active: false,
-      layerCount: 0
+      layerCount: 0,
+      editableLayer: -1,
+      nameInputActive: false
     };
     this.layerStore = props.layerStore;
     this.layerStore.subscribe(this.layerStoreListener.bind(this));
@@ -62,10 +67,11 @@ class LayerElement extends React.Component {
 
 
   layerStoreListener() {
-    const { layers } = this.layerStore.getState();
+    const { layers, editableLayer } = this.layerStore.getState();
 
     this.setState({
-      layerCount: layers.length
+      layerCount: layers.length,
+      editableLayer
     });
   }
 
@@ -119,6 +125,16 @@ class LayerElement extends React.Component {
     this.onLayerNameChange(id, e);
   }
 
+  editLayer(id) {
+    const { editableLayer } = this.state;
+
+    if (editableLayer === id) {
+      id = -1;
+    }
+
+    this.layerStore.dispatch(editLayer(id));
+  }
+
   removeLayer(id) {
     this.layerStore.dispatch(removeLayer(id));
   }
@@ -141,16 +157,20 @@ class LayerElement extends React.Component {
   render() {
 
     const { layer, layerIdx } = this.props;
-    const { active, layerCount, nameInputActive } = this.state;
+    const { active, layerCount, nameInputActive, editableLayer } = this.state;
 
     let isFirst = layerIdx > 0;
     let isLast = layerIdx + 1 < layerCount;
+
+    let isEditable = editableLayer === -1;
+    let isEditableLayer = !isEditable && editableLayer === layer.id;
 
     let rgba = rgbToCss(hexToRgb(layer.color), 0.7);
 
     let boundedToggleLayer = this.toggleLayer.bind(this, layer.id);
     let boundedRemoveLayer = this.removeLayer.bind(this, layer.id);
     let boundedZoomToLayer = this.zoomToLayer.bind(this, layer.extent);
+    let boundedEditLayer = this.editLayer.bind(this, layer.id);
     let boundedMoveLayerUp = this.moveLayerUp.bind(this, layer.id);
     let boundedMoveLayerDown = this.moveLayerDown.bind(this, layer.id);
     let boundedLayerNameDblClick = this.onLayerNameDoubleClick.bind(this, layer);
@@ -160,7 +180,8 @@ class LayerElement extends React.Component {
     let boundedOnShow = this.onShow.bind(this);
 
     return (
-      <div className={`layer-entry ${active ? 'active' : ''}`}>
+      <div key={layer.id}
+        className={`layer-entry ${active ? 'active' : ''}`}>
         <input type="checkbox" checked={layer.visible} onChange={boundedToggleLayer}/>
         <div className="layer-color" style={{backgroundColor: rgba, borderColor:layer.color}}/>
         <input className={`layer-name ${nameInputActive ? 'active' : ''}`} type="text"
@@ -176,6 +197,7 @@ class LayerElement extends React.Component {
           icon={ic_more_horiz}
           dropDownStyle={{ width: "10rem" }}>
             <DropDownItem label={"Zoom to Layer"} onClick={boundedZoomToLayer}/>
+            <DropDownItem disabled={!(isEditable || isEditableLayer)} label={`${isEditableLayer ? "Stop edit Layer": "Start edit Layer"}`} onClick={boundedEditLayer} />
             <DropDownSeparator />
             <DropDownItem disabled={!isFirst} label={"Move Layer up"}
               onClick={boundedMoveLayerUp}/>

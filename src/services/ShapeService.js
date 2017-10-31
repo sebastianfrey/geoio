@@ -109,7 +109,7 @@ function readShape(view) {
 
       case POLYGON: {
         features = readPolygons(view).map(featureMapper);
-        geometryType = "MultiPolygon";
+        geometryType = "Polygon";
         break;
       }
 

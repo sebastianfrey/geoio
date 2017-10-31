@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 import './DropDown.css';
 
@@ -140,6 +139,8 @@ export class DropDownMenu extends React.Component {
 export class DropDownItem extends React.Component {
 
   handleOnClick() {
+    if (this.isDisabled()) return;
+    
     const { onClick = () => {}, _onClick = () => {} } = this.props;
     onClick(this);
     _onClick(this);
