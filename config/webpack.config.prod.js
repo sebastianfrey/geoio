@@ -115,7 +115,7 @@ module.exports = {
       // It's important to do this before Babel processes the JS.
       {
         test: /\.worker\.js$/,
-        use: { loader: 'worker-loader?inline=true' }
+        use: [ { loader: 'worker-loader' } ]
       },
       {
         test: /\.(js|jsx)$/,
