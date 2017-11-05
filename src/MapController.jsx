@@ -9,7 +9,7 @@ import '../node_modules/leaflet-draw/dist/leaflet.draw.css';
 
 import colorUtil from './colorUtil';
 import { fromGeoJSON } from './geometryUtil';
-import { addLayer  } from './map/actions';
+import { addLayer  } from './core/actions';
 
 const accept = '.shp';
 

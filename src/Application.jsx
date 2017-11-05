@@ -8,7 +8,7 @@ import LayerController from './LayerController';
 
 import MapController from './MapController';
 
-import { layerManager } from './map/reducers';
+import { layerManager } from './core/reducers';
 
 import Dropable from './Dropable';
 

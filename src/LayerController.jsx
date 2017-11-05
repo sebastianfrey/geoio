@@ -7,7 +7,7 @@ import L from 'leaflet';
 import { hexToRgb, rgbToCss } from './colorUtil';
 
 import { toggleLayer, removeLayer, zoomToLayer,
-  moveLayerDown, moveLayerUp, updateLayer, editLayer } from './map/actions';
+  moveLayerDown, moveLayerUp, updateLayer, editLayer } from './core/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
 
