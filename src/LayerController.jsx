@@ -1,6 +1,10 @@
 import React from 'react';
 
+import { ChromePicker } from "react-color";
+
 import { ic_more_horiz } from 'react-icons-kit/md'; 
+
+import { ic_box } from "./icons/icons";
 
 import L from 'leaflet';
 
@@ -10,6 +14,7 @@ import { toggleLayer, removeLayer, zoomToLayer,
   moveLayerDown, moveLayerUp, updateLayer, editLayer } from './core/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
+
 
 export default class LayerController extends React.Component {
   constructor(props) {
@@ -65,6 +70,15 @@ class LayerElement extends React.Component {
     this.layerStore.subscribe(this.layerStoreListener.bind(this));
   }
 
+  componentDidUpdate() {
+    const { nameInputActive } = this.state;
+    const { nameInput } = this.refs;
+
+    if (nameInputActive) {
+      nameInput.focus()
+    }
+  }
+
 
   layerStoreListener() {
     const { layers, editableLayer } = this.layerStore.getState();
@@ -101,6 +115,12 @@ class LayerElement extends React.Component {
     });
   }
 
+  onLayerNameKeyDown(id, e) {
+    if (e.keyCode !== 13) return;
+
+    this.onLayerNameChange(id, e);
+  }
+
   onLayerNameChange(id, e) {
     const { nameInputActive } = this.state;
     let { value } = e.target;
@@ -109,8 +129,12 @@ class LayerElement extends React.Component {
     if (!nameInputActive) return;
 
     if (value === "") {
-      value = nameInput.defaultValue;      
+      value = nameInput.defaultValue;
     }
+    
+    nameInput.value = value;
+    nameInput.defaultValue = value;
+
     
     this.layerStore.dispatch(updateLayer(id, { name: value }));
     
@@ -119,10 +143,8 @@ class LayerElement extends React.Component {
     });
   }
 
-  onLayerNameKeyDown(id, e) {
-    if (e.keyCode !== 13) return;
-
-    this.onLayerNameChange(id, e);
+  onLayerColorChange(id, color) {
+    this.layerStore.dispatch(updateLayer(id, { color: color.hex }));
   }
 
   editLayer(id) {
@@ -175,6 +197,7 @@ class LayerElement extends React.Component {
     let boundedMoveLayerDown = this.moveLayerDown.bind(this, layer.id);
     let boundedLayerNameDblClick = this.onLayerNameDoubleClick.bind(this, layer);
     let boundedLayerNameChange = this.onLayerNameChange.bind(this, layer.id);
+    let boundedLayerColorChange = this.onLayerColorChange.bind(this, layer.id);
     let boundedLayerNameKeyDown = this.onLayerNameKeyDown.bind(this, layer.id);
     let boundedOnHide = this.onHide.bind(this);
     let boundedOnShow = this.onShow.bind(this);
@@ -183,8 +206,14 @@ class LayerElement extends React.Component {
       <div key={layer.id}
         className={`layer-entry ${active ? 'active' : ''}`}>
         <input type="checkbox" checked={layer.visible} onChange={boundedToggleLayer}/>
-        <div className="layer-color" style={{backgroundColor: rgba, borderColor:layer.color}}/>
-        <input className={`layer-name ${nameInputActive ? 'active' : ''}`} type="text"
+        <DropDownIcon className="layer-color"
+          iconSize={16}
+          icon={ic_box}
+          iconStyle={{backgroundColor: rgba, border: `1px solid ${layer.color}`}}>
+          <ChromePicker color={layer.color} disableAlpha={true}
+            onChangeComplete={boundedLayerColorChange}/>
+        </DropDownIcon>
+        <input autoFocus className={`layer-name ${nameInputActive ? 'active' : ''}`} type="text"
           ref="nameInput"
           defaultValue={layer.name}
           onDoubleClick={boundedLayerNameDblClick}
@@ -195,6 +224,7 @@ class LayerElement extends React.Component {
           onHide={boundedOnHide}
           onShow={boundedOnShow}
           icon={ic_more_horiz}
+          className="layer-menu"
           dropDownStyle={{ width: "10rem" }}>
             <DropDownItem label={"Zoom to Layer"} onClick={boundedZoomToLayer}/>
             <DropDownItem disabled={!(isEditable || isEditableLayer)} label={`${isEditableLayer ? "Stop edit Layer": "Start edit Layer"}`} onClick={boundedEditLayer} />

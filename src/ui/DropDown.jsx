@@ -49,22 +49,24 @@ export class DropDownIcon extends React.Component {
 
 
   render() {
-    const { icon, iconSize, children, onHide, onShow } = this.props;    
+    const { icon, iconSize, iconStyle = {}, children, onHide, onShow, className = "" } = this.props;    
 
     let boundedIconClick = this.handleIconClick.bind(this);
     let boundedDropDownMenuClick = this.handleDropDownMenuClick.bind(this);
 
     return (
-      <div ref="dropDownIcon">
+      <div ref="dropDownIcon" className={className}>
         <Icon
+          className="dropdown-icon"
           onClick={boundedIconClick}
           icon={icon}
+          style={iconStyle}
           size={iconSize} />
         <DropDownMenu ref="dropDownMenu"
           onMenuItemClick={boundedDropDownMenuClick}
           onHide={onHide}
           onShow={onShow}
-          dropDownStyle={{ width: "10rem" }}> 
+          dropDownStyle={{ width: "auto" }}> 
           {children}
         </DropDownMenu>
       </div>

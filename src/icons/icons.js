@@ -1,0 +1,1 @@
+export const ic_box = { viewBox: "0 0 24 24", "children": [{ "name": "rectangle", "attribs": { "width": "24", "height": "24" } }] };
