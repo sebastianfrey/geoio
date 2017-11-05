@@ -31,17 +31,25 @@ export default class MapController extends React.Component {
 
   componentDidUpdate() {
     const { map } = this.refs;
-    const { layers } = this.state;
+    const { layers, extent } = this.state;
     const leafletLayers = map.leafletElement._layers;
 
     let layerIds = layers.map(layer => layer.id);
 
-    map.leafletElement.invalidateSize();    
+    let layerColors = layers.reduce((colors, layer) => {
+      colors[layer.id] = {fillColor: layer.color, color: layer.color};
+      return colors;
+    }, {});
 
     Object.values(leafletLayers)
       .filter(layer => layer.options.layerId != null)
       .sort((a, b) => layerIds.indexOf(a.options.layerId) < layerIds.indexOf(b.options.layerId) ? 1 : -1)
-      .forEach(layer => { layer.bringToFront();});
+      .forEach(layer => {
+        layer.bringToFront();
+        layer.setStyle(layerColors[layer.options.layerId]);
+      });
+
+    map.leafletElement.fitBounds(extent);
   }
 
   layerStoreListener() {
