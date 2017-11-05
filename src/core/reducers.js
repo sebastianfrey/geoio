@@ -50,13 +50,13 @@ export function layerManager(state = initialState, action) {
     case UPDATE_LAYER: {
       return Object.assign({}, state, {
         layers: state.layers.map((layer) => {
-          let opts = {};
+          let changes = {};
 
           if (layer.id === action.id) {
-            opts = Object.assign(opts, action.options);
+            changes = Object.assign(changes, action.changes);
           }
 
-          return Object.assign({}, layer, opts);
+          return Object.assign({}, layer, changes);
         })
       });
     }
