@@ -4,7 +4,9 @@ import PropTypes from "prop-types";
 
 import { ChromePicker } from "react-color";
 
-import { ic_more_horiz } from 'react-icons-kit/md'; 
+import { ic_more_horiz, ic_add } from 'react-icons-kit/md'; 
+
+import Icon from 'react-icons-kit';
 
 import { ic_box } from "./icons/icons";
 
@@ -16,6 +18,7 @@ import { toggleLayer, removeLayer, zoomToLayer,
   moveLayerDown, moveLayerUp, updateLayer, editLayer } from './core/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
+
 
 
 export default class LayerController extends React.Component {
@@ -50,18 +53,24 @@ export default class LayerController extends React.Component {
 
     return (
       <div className={`layer-controller ${this.props.right ? "right" : ""}`}>
-        <div className="title">{title}</div>
-        <div className="layer-list">
-          {
-            layers.map((layer, i) => {
-              return (
-                <LayerElement
-                  key={layer.id}
-                  layerIdx={i}
-                  layer={layer} />
-              );
-            })
-          }
+        <div className="toolbar">
+          <DropDownIcon iconSize={20}
+            icon={ic_add} className="ic_green ic_padding_5 ic_flex"/>
+        </div>
+        <div className="content">
+          <div className="title">{title}</div>
+          <div className="layer-list">
+            {
+              layers.map((layer, i) => {
+                return (
+                  <LayerElement
+                    key={layer.id}
+                    layerIdx={i}
+                    layer={layer} />
+                );
+              })
+            }
+          </div>
         </div>
       </div>
     );
