@@ -1,1 +1,1 @@
-export const ACCEPT = '.shp';
+export const ACCEPT = '.shp, .dbf, .cpg, .prj, .shx';

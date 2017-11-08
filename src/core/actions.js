@@ -6,6 +6,9 @@ export const MOVE_LAYER_UP = 'MOVE_LAYER_UP';
 export const MOVE_LAYER_DOWN = 'MOVE_LAYER_DOWN';
 export const TOGGLE_LAYER = 'TOGGLE_LAYER';
 export const ZOOM_TO_LAYER = 'ZOOM_TO_LAYER';
+export const ADD_FEATURES = 'ADD_FEATURES';
+export const UPDATE_FEATURES = 'UPDATE_FEATURES';
+export const DELETE_FEATURES = 'DELETE_FEATURES';
 
 export function addLayer(layer) {
   return {
@@ -62,4 +65,28 @@ export function zoomToLayer(extent) {
     type: ZOOM_TO_LAYER,
     extent
   };
+}
+
+export function addFeatures(id, features) {
+  return {
+    type: ADD_FEATURES,
+    id,
+    features
+  }
+}
+
+export function updateFeatures(id, features) {
+  return {
+    type: UPDATE_FEATURES,
+    id,
+    features
+  };
+}
+
+export function deleteFeatures(id, ids) {
+  return {
+    type: DELETE_FEATURES,
+    id,
+    ids
+  }
 }

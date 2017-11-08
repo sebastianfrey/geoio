@@ -1,36 +1,22 @@
 import React from 'react';
 
-import { createStore } from 'redux';
 
-import Table from './Table';
-import Header from './Header';
-import LayerController from './LayerController';
+import Container from './Container';
 
-import MapController from './MapController';
+import { Provider } from 'react-redux';
+import { configureStore } from './core/reducers';
 
-import { layerManager } from './core/reducers';
 
-import Dropable from './Dropable';
 
-const DropableMapController = Dropable(MapController);
-
-const layerStore = createStore(layerManager);
+const store = configureStore();
 
 export default class Application extends React.Component {
+
   render() {
     return (
-      <div className="main">
-        <Header  title="GeoIO"/>
-        <div className="app-container">
-          <LayerController
-            title={"Table of Contents"}
-            layerStore={layerStore}
-            right={true}/> 
-          <div className="content-container">
-            <DropableMapController layerStore={layerStore} />
-          </div>    
-        </div>
-      </div>
+      <Provider store={store}>
+        <Container />
+      </Provider>
     );
   }
 }

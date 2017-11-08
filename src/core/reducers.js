@@ -1,7 +1,12 @@
+import { createStore, combineReducers } from 'redux';
+
 import { ADD_LAYER, REMOVE_LAYER, UPDATE_LAYER, EDIT_LAYER, TOGGLE_LAYER,
-  ZOOM_TO_LAYER, MOVE_LAYER_DOWN, MOVE_LAYER_UP } from './actions';
+  ZOOM_TO_LAYER, MOVE_LAYER_DOWN, MOVE_LAYER_UP, ADD_FEATURES, UPDATE_FEATURES,
+  DELETE_FEATURES } from './actions';
 
 import L from 'leaflet';
+
+import { reducer as notifications } from 'react-notification-system-redux';
 
 var ID_INCREMENTER = 0;
 
@@ -15,41 +20,59 @@ const initialState = {
   editableLayer: -1
 }
 
-export function layerManager(state = initialState, action) {
+function extent(state = bounds, action) {
+  
+  switch (action.type) {
+
+    case ZOOM_TO_LAYER: {
+      return action.extent;
+    }
+
+    default: {
+      return state;
+    }
+  }
+}
+
+function editableLayer(state = -1, action) {
+  
+  switch (action.type) {
+
+    case EDIT_LAYER: {
+      return action.id;
+    }
+
+    default: {
+      return state;
+    }
+
+  }
+}
+
+function layers(state = [], action) {
 
   switch (action.type) {
 
     case ADD_LAYER: {
 
-      return Object.assign({}, state, {
-        layers: [
-          ...state.layers,
-          Object.assign({}, action.layer, { id: ID_INCREMENTER++ })
-        ]
-      });
+      return  [
+        ...state,
+        Object.assign({}, action.layer, { id: ID_INCREMENTER++ })
+      ];
     }
 
     case REMOVE_LAYER: {
-      return Object.assign({}, state, {
-        layers: state.layers
-          .filter((layer) => {
+      return state
+        .filter((layer) => {
           return action.id !== layer.id;
-          }).map((layer) => {
-            return Object.assign({}, layer);
-          })
-      });
+        }).map((layer) => {
+          return Object.assign({}, layer);
+        });
     }
-
-    case EDIT_LAYER: {
-      return Object.assign({}, state, {
-        editableLayer: action.id
-      });
-    }
-
 
     case UPDATE_LAYER: {
-      return Object.assign({}, state, {
-        layers: state.layers.map((layer) => {
+      return state
+        .map((layer) => {
           let changes = {};
 
           if (layer.id === action.id) {
@@ -57,41 +80,35 @@ export function layerManager(state = initialState, action) {
           }
 
           return Object.assign({}, layer, changes);
-        })
-      });
+        });
     }
 
     case TOGGLE_LAYER: {
-      return Object.assign({}, state, {
-        layers: state.layers.map((layer) => {
+      return state
+        .map((layer) => {
           if (layer.id === action.id) {
             layer.visible = !layer.visible;
           }
           return Object.assign({}, layer);
-        })
-      })
+        });
     }
 
     case MOVE_LAYER_UP: {
 
-      let layers = state.layers
-        .map(layer => Object.assign({}, layer));
+      let layers = state.map(layer => Object.assign({}, layer));
 
       let layerIdx = layers.findIndex(layer => layer.id === action.id);
 
-      if (layerIdx === 0) return state;
+      if (layerIdx === 0) return layers;
 
       layers.splice(layerIdx - 1, 0, layers.splice(layerIdx, 1)[0]);
 
-      return Object.assign({}, state, {
-        layers: layers
-      });
+      return layers;
     }
 
     case MOVE_LAYER_DOWN: {
 
-      let layers = state.layers
-        .map(layer => Object.assign({}, layer));
+      let layers = state.map(layer => Object.assign({}, layer));
 
       let layerIdx = layers.findIndex(layer => layer.id === action.id);
 
@@ -99,18 +116,71 @@ export function layerManager(state = initialState, action) {
 
       layers.splice(layerIdx + 1, 0,layers.splice(layerIdx, 1)[0]);
 
-      return Object.assign({}, state, {
-        layers: layers
-      });
+      return layers;
     }
 
-    case ZOOM_TO_LAYER: {
-      return Object.assign({}, state, {
-        extent: action.extent
-      });
+    case ADD_FEATURES: {
+      return state
+        .map((layer) => {
+
+          if (layer.id === action.id) {
+            return Object.assign({}, layer, {
+              data: layer.data
+                .concat(action.features)
+            });
+          }
+
+          return layer;
+        });
+    }
+
+    case UPDATE_FEATURES: {
+      return state
+        .map((layer) => {
+
+          if (layer.id === action.id) {
+            let uuids = action.features.map(feature => feature.uuid);
+
+            return Object.assign({}, layer, {
+              data: layer.data
+                .filter(feature => !uuids.includes(feature.uuid))
+                .concat(action.features)
+            });
+          }
+
+          return layer;
+        })
+    }
+
+    case DELETE_FEATURES: {
+      return state
+        .map((layer) => {
+          
+          if (layer.id === action.id) {
+            return Object.assign({}, layer, {
+              data: layer.data
+                .filter(feature => !action.ids.includes(feature.uuid))
+            });
+          }
+
+          return layer;
+        });
     }
 
     default:
       return state;
   }
+}
+
+
+export function configureStore() {
+  return createStore(
+    combineReducers({
+      layers,
+      editableLayer,
+      extent,
+      notifications
+    }),
+    initialState
+  );
 }

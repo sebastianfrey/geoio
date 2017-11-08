@@ -59,7 +59,7 @@ function checkShapeType(shapeType) {
 }
 
 
-function readShape(view) {
+function readShape(view, projector) {
 
   // read file type
   let fileCode = view.getInt32(0, false);
@@ -76,18 +76,23 @@ function readShape(view) {
   // check shape version
   checkShapeVersion(shapeVersion);
 
+
   // read shape type.
   let shapeType = view.getInt32(32, true);
   
   // check shape type
   checkShapeType(shapeType);
 
-
   // read shape extent
   let xmin = view.getFloat64(36, true);
   let ymin = view.getFloat64(44, true);
   let xmax = view.getFloat64(52, true);
   let ymax = view.getFloat64(60, true);
+
+  if (projector) {
+    [xmin, ymin] = projector.inverse([xmin, ymin]);
+    [xmax, ymax] = projector.inverse([xmax, ymax]);
+  }
 
   let features = [];
   let geometryType = "";
@@ -96,19 +101,19 @@ function readShape(view) {
     switch (shapeType) {
       
       case POINT: {
-        features = readPoints(view).map(featureMapper);
+        features = readPoints(view, projector).map(featureMapper);
         geometryType = "Point";
         break;
       }
 
       case POLYLINE: {
-        features = readPolylines(view).map(featureMapper);
+        features = readPolylines(view, projector).map(featureMapper);
         geometryType = "MultiLineString";
         break;
       }
 
       case POLYGON: {
-        features = readPolygons(view).map(featureMapper);
+        features = readPolygons(view, projector).map(featureMapper);
         geometryType = "Polygon";
         break;
       }
@@ -129,16 +134,16 @@ function featureMapper(geometry) {
   return {type, geometry, properties: {}};
 }
 
-function readPoints(view) {
+function readPoints(view, projector) {
   let geometries = [], i = 100;
   while (i < view.byteLength) {
-    i = readPoint(view, geometries, i);
+    i = readPoint(view, geometries, i, projector);
   }
 
   return geometries;
 }
 
-function readPoint(view, geometries, i) {
+function readPoint(view, geometries, i, projector) {
   let recordHeader = {};
   i = readRecordHeader(view, recordHeader, i);
 
@@ -155,21 +160,21 @@ function readPoint(view, geometries, i) {
   geometries.push(point);
 
   // fill empty point
-  return readXY(view, point.coordinates, i, true);
+  return readXY(view, point.coordinates, i, projector, true);
 }
 
 
-function readPolylines(view) {
+function readPolylines(view, projector) {
   let geometries = [], i = 100;
 
   while(i < view.byteLength) {
-    i = readPolyline(view, geometries, i);
+    i = readPolyline(view, geometries, i, projector);
   }
 
   return geometries;
 }
 
-function readPolyline(view, geometries, i) {
+function readPolyline(view, geometries, i, projector) {
   let recordHeader = {};
   i = readRecordHeader(view, recordHeader, i);
 
@@ -200,10 +205,10 @@ function readPolyline(view, geometries, i) {
 
   geometries.push(polyline);
 
-  return readSegments(view, polyline.coordinates, pathCount, vertexCount, i);
+  return readSegments(view, polyline.coordinates, pathCount, vertexCount, i, projector);
 }
 
-function readSegments(view, segments, segmentCount, vertexCount, i) {
+function readSegments(view, segments, segmentCount, vertexCount, i, projector) {
   let segmentIndex = i + segmentCount * 4;
   let _segmentIndex = segmentIndex;
   let _vertexCount = vertexCount;
@@ -216,7 +221,7 @@ function readSegments(view, segments, segmentCount, vertexCount, i) {
 
     for (let k = segmentStart; k < vertexCount; k++) {
       let vertexStart = _segmentIndex + 2 * k * 8;
-      readXY(view, segment, vertexStart);
+      readXY(view, segment, vertexStart, projector);
     }
 
     vertexCount = vertexCount - (vertexCount - segmentStart);
@@ -228,17 +233,17 @@ function readSegments(view, segments, segmentCount, vertexCount, i) {
 }
 
 
-function readPolygons(view) {
+function readPolygons(view, projector) {
   let geometries = [], i = 100;  
 
   while(i < view.byteLength) {
-    i = readPolygon(view, geometries, i);
+    i = readPolygon(view, geometries, i, projector);
   }
 
   return geometries;
 }
 
-function readPolygon(view, geometries, i) {
+function readPolygon(view, geometries, i, projector) {
   let recordHeader = {};
   i = readRecordHeader(view, recordHeader, i);
 
@@ -269,16 +274,22 @@ function readPolygon(view, geometries, i) {
 
   geometries.push(poylgon);
 
-  return readSegments(view, poylgon.coordinates, ringCount, vertexCount, i);
+  return readSegments(view, poylgon.coordinates, ringCount, vertexCount, i, projector);
 }
 
-function readXY(view, coordinates, i, isPoint) {
+function readXY(view, coordinates, i, projector, isPoint) {
   // read x coordinate
   let x = view.getFloat64(i, true);
   i+=8;
   // read y coordinate
   let y = view.getFloat64(i, true);
   i+=8;
+
+  if (projector) {
+    let projected = projector.inverse([x, y]);
+    x = projected[0];
+    y = projected[1];
+  }
 
   isPoint ? coordinates.push(x, y) : coordinates.push([x, y]);
 
@@ -299,13 +310,14 @@ function readRecordHeader(view, recordHeader, i) {
 
 export default class ShapeReader {
 
-  constructor(buffer) {
+  constructor(buffer, projector) {
     this.shapeView =  new DataView(buffer);
+    this.projector = projector;
   }
 
   read() {
     let start = Date.now();
-    let result = readShape(this.shapeView);
+    let result = readShape(this.shapeView, this.projector);
     result.time = (Date.now() - start) / 1000;
     return result;
   }

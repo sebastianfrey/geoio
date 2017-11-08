@@ -1,5 +1,7 @@
 import React from 'react';
 
+import PropTypes from "prop-types";
+
 import { ChromePicker } from "react-color";
 
 import { ic_more_horiz } from 'react-icons-kit/md'; 
@@ -23,12 +25,22 @@ export default class LayerController extends React.Component {
       layers: [],
       title: props.title
     };
-    this.layerStore = props.layerStore;
-    this.layerStore.subscribe(this.layerStoreListener.bind(this));
   }
 
-  layerStoreListener() {
-    const { layers } = this.layerStore.getState();
+  componentWillMount() {
+    const { store } = this.context;
+
+    this.unsubscribe = store.subscribe(this.storeListener.bind(this));
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe && this.unsubscribe();
+  }
+
+  storeListener() {
+    const { store } = this.context;
+
+    const { layers } = store.getState();
     this.setState({ layers });
   }
 
@@ -46,7 +58,6 @@ export default class LayerController extends React.Component {
                 <LayerElement
                   key={layer.id}
                   layerIdx={i}
-                  layerStore= {this.layerStore}
                   layer={layer} />
               );
             })
@@ -57,6 +68,10 @@ export default class LayerController extends React.Component {
   }
 }
 
+LayerController.contextTypes = {
+  store: PropTypes.object
+};
+
 class LayerElement extends React.Component {
   constructor(props) {
     super(props);
@@ -66,8 +81,16 @@ class LayerElement extends React.Component {
       editableLayer: -1,
       nameInputActive: false
     };
-    this.layerStore = props.layerStore;
-    this.layerStore.subscribe(this.layerStoreListener.bind(this));
+  }
+
+  componentWillMount() {
+    const { store } = this.context;
+
+    this.unsubscribe = store.subscribe(this.storeListener.bind(this));
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe && this.unsubscribe();
   }
 
   componentDidUpdate() {
@@ -80,8 +103,10 @@ class LayerElement extends React.Component {
   }
 
 
-  layerStoreListener() {
-    const { layers, editableLayer } = this.layerStore.getState();
+  storeListener() {
+    const { store } = this.context;
+
+    const { layers, editableLayer } = store.getState();
 
     this.setState({
       layerCount: layers.length,
@@ -90,7 +115,9 @@ class LayerElement extends React.Component {
   }
 
   toggleLayer(id) {
-    this.layerStore.dispatch(toggleLayer(id));
+    const { store } = this.context;
+
+    store.dispatch(toggleLayer(id));
   }
 
   onShow(e) {    
@@ -122,6 +149,8 @@ class LayerElement extends React.Component {
   }
 
   onLayerNameChange(id, e) {
+    const { store } = this.context;
+
     const { nameInputActive } = this.state;
     let { value } = e.target;
     const { nameInput } = this.refs;
@@ -136,7 +165,7 @@ class LayerElement extends React.Component {
     nameInput.defaultValue = value;
 
     
-    this.layerStore.dispatch(updateLayer(id, { name: value }));
+    store.dispatch(updateLayer(id, { name: value }));
     
     this.setState({
       nameInputActive: false
@@ -144,36 +173,48 @@ class LayerElement extends React.Component {
   }
 
   onLayerColorChange(id, color) {
-    this.layerStore.dispatch(updateLayer(id, { color: color.hex }));
+    const { store } = this.context;
+
+    store.dispatch(updateLayer(id, { color: color.hex }));
   }
 
   editLayer(id) {
+    const { store } = this.context;
+
     const { editableLayer } = this.state;
 
     if (editableLayer === id) {
       id = -1;
     }
 
-    this.layerStore.dispatch(editLayer(id));
+    store.dispatch(editLayer(id));
   }
 
   removeLayer(id) {
-    this.layerStore.dispatch(removeLayer(id));
+    const { store } = this.context;
+
+    store.dispatch(removeLayer(id));
   }
 
   moveLayerUp(id) {
-    this.layerStore.dispatch(moveLayerUp(id));
+    const { store } = this.context;
+
+    store.dispatch(moveLayerUp(id));
   }
 
   moveLayerDown(id) {
-    this.layerStore.dispatch(moveLayerDown(id));
+    const { store } = this.context;
+
+    store.dispatch(moveLayerDown(id));
   }
 
   zoomToLayer(extent) {
+    const { store } = this.context;
+
     const {xmin, ymin, xmax, ymax } = extent;
     const ll = L.latLng(ymin, xmin), ur = L.latLng(ymax, xmax);
 
-    this.layerStore.dispatch(zoomToLayer(L.latLngBounds(ll, ur)));
+    store.dispatch(zoomToLayer(L.latLngBounds(ll, ur)));
   }
 
   render() {
@@ -240,3 +281,7 @@ class LayerElement extends React.Component {
     );
   }
 }
+
+LayerElement.contextTypes = {
+  store: PropTypes.object
+};

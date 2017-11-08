@@ -1,5 +1,7 @@
 import React from 'react';
 
+import PropTypes from "prop-types";
+
 import L from 'leaflet';
 import { Map, TileLayer, GeoJSON, FeatureGroup, CircleMarker, Polyline, Polygon } from 'react-leaflet';
 import { EditControl } from "react-leaflet-draw"
@@ -9,35 +11,41 @@ import '../node_modules/leaflet-draw/dist/leaflet.draw.css';
 
 import colorUtil from './colorUtil';
 import { fromGeoJSON } from './geometryUtil';
-import { addLayer  } from './core/actions';
+import { addLayer, addFeatures, updateFeatures, deleteFeatures  } from './core/actions';
 
-const accept = '.shp';
+import UUID from './services/UUID';
+
+import Notifications from "react-notification-system-redux";
 
 export default class MapController extends React.Component {
   constructor(props) {
     super(props)
-    this.layerStore = this.props.layerStore;
-    const { extent } = this.layerStore.getState();
     this.state = {
-      accept: accept,
       files: [],
       dropzoneActive: false,
       layers: [],
-      extent: extent,
-      editableLayer: -1,
+      extent: null,
+      editableLayer: -1
     }
-    this.layerStore.subscribe(this.layerStoreListener.bind(this));
+  }
+
+  componentWillMount() {
+    const { store } = this.context;
+    store.subscribe(this.storeListener.bind(this));
+
+    const { extent } = store.getState();
+    this.setState({ extent });
   }
 
   componentDidUpdate() {
     const { map } = this.refs;
-    const { layers, extent } = this.state;
+    const { layers } = this.state;
     const leafletLayers = map.leafletElement._layers;
 
     let layerIds = layers.map(layer => layer.id);
 
     let layerColors = layers.reduce((colors, layer) => {
-      colors[layer.id] = {fillColor: layer.color, color: layer.color};
+      colors[layer.id] = { fillColor: layer.color, color: layer.color };
       return colors;
     }, {});
 
@@ -48,41 +56,144 @@ export default class MapController extends React.Component {
         layer.bringToFront();
         layer.setStyle(layerColors[layer.options.layerId]);
       });
-
-    map.leafletElement.fitBounds(extent);
   }
 
-  layerStoreListener() {
-    const { layers, extent, editableLayer } = this.layerStore.getState();
+  storeListener() {
+    const { store } = this.context;
+    const { layers, extent, editableLayer } = store.getState();
     this.setState({ layers, extent, editableLayer });
   }
 
 
-  handleDrop(worker, file, result) {
-    worker.terminate();
-    let parts = file.name.split(".");
-    parts.pop();
-    result.data.layer = parts.join(".");
+  handleDrop(result, file) {
+    const { store } = this.context;
+
+    result.data.layer = file.name;
+    if (result.data.features.length > 5000) {
+      store.dispatch(Notifications.warning({
+        title: "Warning",
+        message: "FeatureSet is to big.",
+        position: "br"
+      }));
+      return;
+    }
     this.addGeoJSONLayer(result.data);
   }
 
+  handleDropError(e) {
+    const { store } = this.context;
+
+    store.dispatch(Notifications.error({
+      title: "Error",
+      message: e.message,
+      position: "br"
+    }));
+  }
+
   addGeoJSONLayer(featureSet) {
-    this.layerStore.dispatch(
+    const { store } = this.context;
+
+    let { layer, features, geometryType, extent } = featureSet;
+
+    features = features.map((feature) => {
+      return Object.assign({}, feature, { uuid: UUID.generate()});
+    });
+
+    store.dispatch(
       addLayer({
         type: "GeoJSONLayer",
-        name: featureSet.layer,
-        data: featureSet.features,
-        geometryType: featureSet.geometryType,
+        name: layer,
+        data: features,
+        geometryType: geometryType,
         visible: true,
-        extent: featureSet.extent,
+        extent: extent,
         color: colorUtil.random()
       })
     );
 
-    const { layers } = this.layerStore.getState();
+    const { layers } = store.getState();
     this.setState({ layers });
   }
 
+
+  createEditControlOptions(layer) {
+    let drawOptions = {
+      polyline: false,
+      polygon: false,
+      rectangle: false,
+      circle: false,
+      marker: false,
+      circlemarker: false
+    };
+
+    switch (layer.geometryType) {
+      case "Point": {
+        drawOptions.circlemarker = true;
+        break;
+      }
+
+      case "MultiLineString": {
+        drawOptions.polyline = true;
+        break;
+      }
+
+      case "Polygon": {
+        drawOptions.polygon = true;
+        break;
+      }
+
+      default: break;
+    }
+
+    let editOptions = {
+      edit: layer.geometryType === "Point"
+    };
+
+    return {
+      position: 'topright',
+      draw: drawOptions,
+      edit: editOptions
+    };
+  }
+
+  onCreated(id, e) {
+    const { store } = this.context;
+
+    let { layer } = e;
+    let feature = layer.toGeoJSON();
+
+    let created = Object.assign({}, feature, {
+      uuid: UUID.generate()
+    });
+
+    store.dispatch(addFeatures(id, [ created ]));
+  }
+
+  onEdited(id, e) {
+    const { store } = this.context;
+
+    let { layers } = e;
+    let { features } = layers.toGeoJSON();
+
+    let edited = features.map(feature => {
+      return Object.assign({}, feature, {
+        uuid: UUID.generate()
+      });
+    })
+
+    store.dispatch(updateFeatures(id, edited));
+  }
+
+
+  onDeleted(id, e) {
+    const { store } = this.context;
+    
+    let { layers } = e;
+    
+    let deleted = layers.getLayers().map(layer => layer.options.uuid)
+
+    store.dispatch(deleteFeatures(id, deleted));
+  }
 
   render() {
     let { layers, extent, editableLayer } = this.state;
@@ -91,47 +202,9 @@ export default class MapController extends React.Component {
     
     let editLayer = layers.find(layer => layer.id === editableLayer);
 
-    let editControlOptions = {};
-
-    if (editLayer) {
-      let drawOptions = {
-        polyline: false,
-        polygon: false,
-        rectangle: false,
-        circle: false,
-        marker: false,
-        circlemarker: false
-      };
-
-      switch (editLayer.geometryType) {
-        case "Point": {
-          drawOptions.circlemarker = true;
-          break;
-        }
-
-        case "MultiLineString": {
-          drawOptions.polyline = true;
-          break;
-        }
-
-        case "Polygon": {
-          drawOptions.polygon = true;
-          break;
-        }
-
-        default: break;
-      }
-
-      let editOptions = {
-        edit: editLayer.geometryType === "Point"
-      };
-
-      editControlOptions = Object.assign(editControlOptions, {
-        position: 'topright',
-        draw: drawOptions,
-        edit: editOptions
-      });
-    }
+    let boundedOnEdited = this.onEdited.bind(this, editableLayer);
+    let boundedOnCreated = this.onCreated.bind(this, editableLayer);
+    let boundedOnDeleted = this.onDeleted.bind(this, editableLayer);
 
     return (
       <Map className="map-controller" bounds={extent} ref="map">
@@ -147,23 +220,25 @@ export default class MapController extends React.Component {
               let style = { fillColor: layer.color, color: layer.color, layerId: layer.id};
 
               if (editLayer === layer) {
+
                 return (
                   <FeatureGroup
-                    key={layer.id}
-                    options={{priority: i }}>
+                    key={layer.id}>
                     <EditControl
                       position='topright'
-                      onEdited={this._onEditPath}
-                      onCreated={this._onCreate}
-                      onDeleted={this._onDeleted}
-                      {...editControlOptions}
+                      onEdited={boundedOnEdited}
+                      onCreated={boundedOnCreated}
+                      onDeleted={boundedOnDeleted}
+                      {...this.createEditControlOptions(layer)}
                     />
                     {
                       layer.data
-                        .map((feature, j) => {
-                          let { geometry } = feature;
+                        .map((feature, key) => {
+
+                          let { geometry, uuid } = feature;
                           let options = Object.assign({
-                            key: j
+                            key,
+                            uuid
                           }, fromGeoJSON(geometry), style);
 
 
@@ -216,3 +291,7 @@ export default class MapController extends React.Component {
     );
   }
 }
+
+MapController.contextTypes = {
+  store: PropTypes.object
+};
