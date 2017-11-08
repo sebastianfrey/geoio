@@ -166,6 +166,8 @@ export default class MapController extends React.Component {
       uuid: UUID.generate()
     });
 
+    layer.remove();
+
     store.dispatch(addFeatures(id, [ created ]));
   }
 
