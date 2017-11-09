@@ -12,6 +12,12 @@ body, html, #root {
   font-size: 1rem;
 }
 
+input, select, textarea, button, label {
+  font-family: Roboto;
+  font-weight: bold;
+  color: black;
+}
+
 div:focus,
 input:focus,
 select:focus,

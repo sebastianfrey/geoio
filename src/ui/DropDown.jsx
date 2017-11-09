@@ -49,7 +49,9 @@ export class DropDownIcon extends React.Component {
 
 
   render() {
-    const { icon, iconSize, iconStyle = {}, children, onHide, onShow, className = "" } = this.props;    
+    const { icon, iconSize, iconStyle = {}, children,
+      onHide, onShow, className = "", position,
+      dropDownStyle = { width: "auto" } } = this.props;    
 
     let boundedIconClick = this.handleIconClick.bind(this);
     let boundedDropDownMenuClick = this.handleDropDownMenuClick.bind(this);
@@ -66,7 +68,8 @@ export class DropDownIcon extends React.Component {
           onMenuItemClick={boundedDropDownMenuClick}
           onHide={onHide}
           onShow={onShow}
-          dropDownStyle={{ width: "auto" }}> 
+          dropDownStyle={dropDownStyle}
+          position={position}>
           {children}
         </DropDownMenu>
       </div>
@@ -119,17 +122,19 @@ export class DropDownMenu extends React.Component {
 
   render() {
     let { visible } = this.state;
-    let { dropDownStyle = {}, onMenuItemClick = () => {}, children } = this.props;
+    let { dropDownStyle = {}, onMenuItemClick = () => {}, children,
+      position = "right" } = this.props;
 
     let menuItems = React.Children.map(children, menuItem => {
       return React.cloneElement(menuItem, {
-        _onClick: onMenuItemClick
+        _onClick: onMenuItemClick,
+        onSubmit: this.hide.bind(this)
       });
     });
 
     return (
       <div className="dropdown">
-        <div className={`dropdown-menu ${visible ? 'show' : ''}`}
+        <div className={`dropdown-menu ${visible ? 'show' : ''} ${position}`}
           style={dropDownStyle}>
           {menuItems}
         </div>

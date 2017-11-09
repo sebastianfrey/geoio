@@ -18,7 +18,7 @@ import { toggleLayer, removeLayer, zoomToLayer,
   moveLayerDown, moveLayerUp, updateLayer, editLayer } from './core/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
-
+import AddLayerForm from "./ui/form/AddLayerForm";
 
 
 export default class LayerController extends React.Component {
@@ -26,7 +26,8 @@ export default class LayerController extends React.Component {
     super(props);
     this.state = {
       layers: [],
-      title: props.title
+      title: props.title,
+      content: "LAYER_TREE"
     };
   }
 
@@ -47,31 +48,73 @@ export default class LayerController extends React.Component {
     this.setState({ layers });
   }
 
-  render() {
-    let { layers } = this.state;
+  onSubmitAddLayer() {
+
+  }
+
+  onCancelAddLayer() {
+
+  }
+
+  renderContentView(content) {
+    let { layers, showAddLayer } = this.state;
     const { title } = this.props;
+
+
+    switch (content) {
+      case "ADD_LAYER":
+        return (
+          <div className="content">
+            <AddLayerForm
+              onSubmit={() => { this.setState({content: "LAYER_TREE"})}}
+              onCancel={() => { this.setState({content: "LAYER_TREE"})}}/>
+          </div>
+        );
+      
+        case "LAYER_TREE":
+        default:
+          return (
+            <div className="content">
+            
+              <div className="title">{title}</div>
+              <div className="layer-list">
+                {
+                  layers.map((layer, i) => {
+                    return (
+                      <LayerElement
+                        key={layer.id}
+                        layerIdx={i}
+                        layer={layer} />
+                    );
+                  })
+                }
+              </div>
+            </div>
+          );
+    }
+  }
+
+  renderToolbar(content) {
+    if (content === "LAYER_TREE") {
+      return (
+        <div className="toolbar">
+          <Icon icon={ic_add} className="ic_green ic_padding_5 ic_flex"
+            onClick={() => { this.setState({content: "ADD_LAYER"})}} />
+        </div>
+      );
+    } else {
+      return (<div></div>)
+    }
+
+  }
+
+  render() {
+    let { content } = this.state;
 
     return (
       <div className={`layer-controller ${this.props.right ? "right" : ""}`}>
-        <div className="toolbar">
-          <DropDownIcon iconSize={20}
-            icon={ic_add} className="ic_green ic_padding_5 ic_flex"/>
-        </div>
-        <div className="content">
-          <div className="title">{title}</div>
-          <div className="layer-list">
-            {
-              layers.map((layer, i) => {
-                return (
-                  <LayerElement
-                    key={layer.id}
-                    layerIdx={i}
-                    layer={layer} />
-                );
-              })
-            }
-          </div>
-        </div>
+        {this.renderToolbar(content)}
+        {this.renderContentView(content)}
       </div>
     );
   }

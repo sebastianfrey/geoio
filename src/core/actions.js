@@ -9,6 +9,7 @@ export const ZOOM_TO_LAYER = 'ZOOM_TO_LAYER';
 export const ADD_FEATURES = 'ADD_FEATURES';
 export const UPDATE_FEATURES = 'UPDATE_FEATURES';
 export const DELETE_FEATURES = 'DELETE_FEATURES';
+export const EXTENT_CHANGED = 'EXTENT_CHANGED';
 
 export function addLayer(layer) {
   return {
@@ -88,5 +89,12 @@ export function deleteFeatures(id, ids) {
     type: DELETE_FEATURES,
     id,
     ids
+  }
+}
+
+export function extentChanged(extent) {
+  return {
+    type: EXTENT_CHANGED,
+    extent
   }
 }

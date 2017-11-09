@@ -2,7 +2,7 @@ import { createStore, combineReducers } from 'redux';
 
 import { ADD_LAYER, REMOVE_LAYER, UPDATE_LAYER, EDIT_LAYER, TOGGLE_LAYER,
   ZOOM_TO_LAYER, MOVE_LAYER_DOWN, MOVE_LAYER_UP, ADD_FEATURES, UPDATE_FEATURES,
-  DELETE_FEATURES } from './actions';
+  DELETE_FEATURES, EXTENT_CHANGED } from './actions';
 
 import L from 'leaflet';
 
@@ -16,11 +16,12 @@ bounds = L.latLngBounds(corner1, corner2);
 
 const initialState = {
   layers: [],
-  extent: bounds,
+  newExtent: bounds,
+  mapExtent: bounds,
   editableLayer: -1
 }
 
-function extent(state = bounds, action) {
+function newExtent(state = bounds, action) {
   
   switch (action.type) {
 
@@ -31,6 +32,21 @@ function extent(state = bounds, action) {
     default: {
       return state;
     }
+  }
+}
+
+function mapExtent(state = {}, action) {
+  
+  switch (action.type) {
+
+    case EXTENT_CHANGED: {
+      return action.extent;
+    }
+
+    default: {
+      return state;
+    }
+
   }
 }
 
@@ -178,7 +194,8 @@ export function configureStore() {
     combineReducers({
       layers,
       editableLayer,
-      extent,
+      newExtent,
+      mapExtent,
       notifications
     }),
     initialState

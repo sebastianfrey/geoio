@@ -1,0 +1,63 @@
+.form.add-layer {
+  display: flex;
+  flex-direction: column;
+}
+
+.form .row {
+  flex: 1;
+  display: flex;
+  margin: 0.5rem 0;
+  align-items: center;
+}
+
+.form .row.rtl {
+  justify-content: flex-end;
+}
+
+.form .row input[type="text"],
+.form .row input[type="number"] {
+  flex: 1;
+}
+
+.form .row label,
+.form .row .title {
+  flex: 1;
+  color: #214F63;
+  padding-left: 0.5rem;
+}
+
+.form .row .title {
+  background: #4FBEF0;
+  color: white;
+  line-height: 2rem;
+  vertical-align: middle;
+  font-weight: bolder;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+
+.form input, .form select {
+  padding: 0.25rem;
+  border: 1px solid #214F63;
+}
+
+.form button {
+  border: 1px solid #214F63;  
+  background-color: #214F63;
+  color: white;
+  padding: 0.5rem 1rem;
+  margin-left: 0.5rem;
+}
+
+.form input:not(.disabled), .form select {
+  background-color: white;
+}
+
+.form input:focus, .form select:active,
+.form button:active {
+  border: 1px solid #4FBEF0;
+}
+
+.form button:active {
+  background-color: #4FBEF0;
+}

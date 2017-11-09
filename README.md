@@ -6,7 +6,6 @@ Legend
 
 [ ] not implemented
 [x] implemented
-[-] partial implemented
 
 ## GeoIO-support
 - [ ] add geojson drop support
@@ -20,12 +19,10 @@ Legend
 
 
 ## LayerController
-- [-] layer context menu
   - [x] remove layer
   - [x] move layer up/down
   - [x] zoom to layer
   - [x] finish layer editing, currently adds, updates and deletes have no effect on the layer
   - [ ] add export layer menu item
   - [ ] add show properties menu item, requires dbase reader
-- [ ] layer controller toolbar
   - [ ] add layer-add button, to add an empty layer to map.

@@ -9,9 +9,10 @@ import { EditControl } from "react-leaflet-draw"
 import '../node_modules/leaflet/dist/leaflet.css';
 import '../node_modules/leaflet-draw/dist/leaflet.draw.css';
 
-import colorUtil from './colorUtil';
 import { fromGeoJSON } from './geometryUtil';
-import { addLayer, addFeatures, updateFeatures, deleteFeatures  } from './core/actions';
+import { addLayer, addFeatures, updateFeatures, deleteFeatures, extentChanged } from './core/actions';
+
+import { featureSetToLayer } from "./mapUtil";
 
 import UUID from './services/UUID';
 
@@ -33,9 +34,10 @@ export default class MapController extends React.Component {
     const { store } = this.context;
     store.subscribe(this.storeListener.bind(this));
 
-    const { extent } = store.getState();
-    this.setState({ extent });
+    const { newExtent } = store.getState();
+    this.setState({ extent: newExtent });
   }
+
 
   componentDidUpdate() {
     const { map } = this.refs;
@@ -60,8 +62,24 @@ export default class MapController extends React.Component {
 
   storeListener() {
     const { store } = this.context;
-    const { layers, extent, editableLayer } = store.getState();
-    this.setState({ layers, extent, editableLayer });
+    const { layers, newExtent, editableLayer } = store.getState();
+    this.setState({ layers, extent: newExtent, editableLayer });
+  }
+
+  onViewportChanged(e) {
+    const { map } = this.refs;
+    const { store } = this.context;
+
+    if (map) {
+      let bounds = map.leafletElement.getBounds();
+
+      store.dispatch(extentChanged({
+        xmin: bounds._southWest.lng,
+        ymin: bounds._southWest.lat,
+        xmax: bounds._northEast.lng,
+        ymax: bounds._northEast.lat
+      }));
+    }
   }
 
 
@@ -93,23 +111,7 @@ export default class MapController extends React.Component {
   addGeoJSONLayer(featureSet) {
     const { store } = this.context;
 
-    let { layer, features, geometryType, extent } = featureSet;
-
-    features = features.map((feature) => {
-      return Object.assign({}, feature, { uuid: UUID.generate()});
-    });
-
-    store.dispatch(
-      addLayer({
-        type: "GeoJSONLayer",
-        name: layer,
-        data: features,
-        geometryType: geometryType,
-        visible: true,
-        extent: extent,
-        color: colorUtil.random()
-      })
-    );
+    store.dispatch(addLayer(featureSetToLayer(featureSet)));
 
     const { layers } = store.getState();
     this.setState({ layers });
@@ -207,9 +209,13 @@ export default class MapController extends React.Component {
     let boundedOnEdited = this.onEdited.bind(this, editableLayer);
     let boundedOnCreated = this.onCreated.bind(this, editableLayer);
     let boundedOnDeleted = this.onDeleted.bind(this, editableLayer);
+    let boundedOnViewportChanged = this.onViewportChanged.bind(this);
 
     return (
-      <Map className="map-controller" bounds={extent} ref="map">
+      <Map className="map-controller"
+        ref="map"
+        bounds={extent}
+        onViewportChanged={boundedOnViewportChanged}>
         <TileLayer
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'

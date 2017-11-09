@@ -20,6 +20,10 @@
   display: block;
 }
 
+.dropdown-menu.left {
+  left: -1rem;
+}
+
 .dropdown-item {
   color: #214F63;
   padding: 0.5rem;
