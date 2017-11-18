@@ -199,7 +199,10 @@ export default class AddLayerForm extends React.Component {
 }
 
 AddLayerForm.contextTypes = {
-  store: PropTypes.object,
+  store: PropTypes.object
+};
+
+AddLayerForm.propTypes = {
   onSubmit: PropTypes.func,
   onCancel: PropTypes.func
 };
