@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 
 import { ChromePicker } from "react-color";
 
-import { ic_more_horiz, ic_add } from 'react-icons-kit/md'; 
+import { ic_more_horiz, ic_add, ic_perm_data_setting } from 'react-icons-kit/md'; 
 
 import Icon from 'react-icons-kit';
 
@@ -18,7 +18,8 @@ import { toggleLayer, removeLayer, zoomToLayer,
   moveLayerDown, moveLayerUp, updateLayer, editLayer } from './core/actions';
 
 import { DropDownIcon, DropDownItem, DropDownSeparator } from './ui/DropDown'
-import AddLayerForm from "./ui/form/AddLayerForm";
+import AddLayerForm from "./ui/form/AddLayerForm.jsx";
+import GeometryProcessingForm from "./ui/form/GeometryProcessingForm.jsx"
 
 
 export default class LayerController extends React.Component {
@@ -70,6 +71,15 @@ export default class LayerController extends React.Component {
               onCancel={() => { this.setState({content: "LAYER_TREE"})}}/>
           </div>
         );
+
+      case "PROCESSING":
+        return (
+          <div className="content">
+            <GeometryProcessingForm
+              onSubmit={() => { this.setState({content: "LAYER_TREE"})}}
+              onCancel={() => { this.setState({content: "LAYER_TREE"})}}/>
+          </div>
+        );
       
         case "LAYER_TREE":
         default:
@@ -99,7 +109,9 @@ export default class LayerController extends React.Component {
       return (
         <div className="toolbar">
           <Icon icon={ic_add} className="ic_green ic_padding_5 ic_flex"
-            onClick={() => { this.setState({content: "ADD_LAYER"})}} />
+            onClick={() => { this.setState({content: "ADD_LAYER"}) }} />
+          <Icon icon={ic_perm_data_setting} className="ic_padding_5 ic_flex"
+            onClick={() => { this.setState({content: "PROCESSING"}) }} />
         </div>
       );
     } else {
