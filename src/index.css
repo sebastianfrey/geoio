@@ -85,7 +85,8 @@ button:focus {
   display: flex;
   flex-direction: column;
   padding: 0.5rem;
-  width: calc(100% - 1rem);  
+  width: calc(100% - 1rem);
+  flex: 1;
 }
 
 .layer-controller .toolbar {
@@ -184,4 +185,31 @@ button:focus {
 
 .ic_flex {
   display: flex;
+}
+
+.loader {
+  height: 10px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background-color: white;
+}
+.loader:before{
+  display: block;
+  position: absolute;
+  content: "";
+  left: -200px;
+  width: 200px;
+  height: 10px;
+  background-color: #214F63;
+  animation: loading 2s linear infinite;
+}
+
+@keyframes loading {
+  from {left: -200px; width: 30%;}
+  50% {width: 30%;}
+  70% {width: 70%;}
+  80% { left: 50%;}
+  95% {left: 120%;}
+  to {left: 100%;}
 }

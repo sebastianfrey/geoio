@@ -28,7 +28,8 @@ export default class LayerController extends React.Component {
     this.state = {
       layers: [],
       title: props.title,
-      content: "LAYER_TREE"
+      content: "LAYER_TREE",
+      loading: false
     };
   }
 
@@ -45,8 +46,8 @@ export default class LayerController extends React.Component {
   storeListener() {
     const { store } = this.context;
 
-    const { layers } = store.getState();
-    this.setState({ layers });
+    const { layers, processing } = store.getState();
+    this.setState({ layers, loading: processing > 0 });
   }
 
   onSubmitAddLayer() {
@@ -58,7 +59,7 @@ export default class LayerController extends React.Component {
   }
 
   renderContentView(content) {
-    let { layers, showAddLayer } = this.state;
+    let { layers } = this.state;
     const { title } = this.props;
 
 
@@ -109,8 +110,10 @@ export default class LayerController extends React.Component {
       return (
         <div className="toolbar">
           <Icon icon={ic_add} className="ic_green ic_padding_5 ic_flex"
+            title="Add a new Layer"
             onClick={() => { this.setState({content: "ADD_LAYER"}) }} />
           <Icon icon={ic_perm_data_setting} className="ic_padding_5 ic_flex"
+            title="Start a Geoprocessing operation"
             onClick={() => { this.setState({content: "PROCESSING"}) }} />
         </div>
       );
@@ -121,12 +124,13 @@ export default class LayerController extends React.Component {
   }
 
   render() {
-    let { content } = this.state;
+    let { content, loading } = this.state;
 
     return (
       <div className={`layer-controller ${this.props.right ? "right" : ""}`}>
         {this.renderToolbar(content)}
         {this.renderContentView(content)}
+        <div className={loading ? "loader":""}></div>
       </div>
     );
   }

@@ -10,6 +10,8 @@ export const ADD_FEATURES = 'ADD_FEATURES';
 export const UPDATE_FEATURES = 'UPDATE_FEATURES';
 export const DELETE_FEATURES = 'DELETE_FEATURES';
 export const EXTENT_CHANGED = 'EXTENT_CHANGED';
+export const PROCESSING_STARTED = 'PROCESSING_STARTED';
+export const PROCESSING_STOPPED = 'PROCESSING_STOPPED';
 
 export function addLayer(layer) {
   return {
@@ -96,5 +98,17 @@ export function extentChanged(extent) {
   return {
     type: EXTENT_CHANGED,
     extent
+  }
+}
+
+export function processingStarted() {
+  return {
+    type: PROCESSING_STARTED
+  }
+}
+
+export function processingStopped() {
+  return {
+    type: PROCESSING_STOPPED
   }
 }
