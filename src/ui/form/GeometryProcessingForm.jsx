@@ -6,6 +6,10 @@ import './Form.css';
 
 import ConvexHull from './processing/ConvexHull.jsx';
 
+import { processingStarted, processingStopped } from "../../core/actions";
+
+import Notifications from "react-notification-system-redux";
+
 export default class GeometryProcessingForm extends React.Component {
 
   constructor(props) {
@@ -54,9 +58,21 @@ export default class GeometryProcessingForm extends React.Component {
   handleSubmit(event) {
     const { onSubmit } = this.props;
     const { process } = this.refs;
+    const { store } = this.context;
 
     if (process && process.run) {
-      process.run();
+      store.dispatch(processingStarted())
+      process.run()
+        .catch((e) => {
+          store.dispatch(Notifications.error({
+            title: "Processing error",
+            message: e.message,
+            position: "br"
+          }));
+        })
+        .always(() => {
+          store.dispatch(processingStopped())
+        });
     }
 
     if (onSubmit)
