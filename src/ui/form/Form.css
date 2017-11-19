@@ -27,11 +27,11 @@
 }
 
 .form .row .title {
-  background: #4FBEF0;
-  color: white;
+  color: #4FBEF0;
   line-height: 2rem;
   vertical-align: middle;
   font-weight: bolder;
+  font-size: 1.25rem;
   padding-top: 0.125rem;
   padding-bottom: 0.125rem;
 }
