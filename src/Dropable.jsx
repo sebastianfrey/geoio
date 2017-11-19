@@ -94,7 +94,7 @@ export default function Dropable(WrappedComponent) {
           })
           .forEach(file => {
             Promise.props(file.parts)
-              .then((results) => {                
+              .then((results) => {
                 let worker = new ShapeServiceWorker();
 
                 worker.onmessage = (result) => {
