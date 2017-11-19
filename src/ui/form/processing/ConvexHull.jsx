@@ -16,6 +16,8 @@ export default class ConvexHull extends React.Component {
       layers: [],
       source: -1
     };
+
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   componentWillMount() {
