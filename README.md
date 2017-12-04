@@ -1,8 +1,8 @@
 # geoio
 
-This repository was developed in the module GIS Programming @ Hochschule München in the WS2017. 
+The content of this repository is a result of the module GIS Programming @ Hochschule München in WS2017/18. 
 
-The main purpose was to implement an algorithm, which calculates the complex hull of points and a graphical user interface, which allows to manually create points.
+The main purpose was to implement an algorithm, which calculates the complex hull of points. In addition a graphical user interface was required, which allows to manually create points.
 
 To achive this goals, web technologies are used:
 
