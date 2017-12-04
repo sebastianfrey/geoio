@@ -8,7 +8,7 @@ To achive this goals, web technologies are used:
 
 The client side code is written in JavaScript by using the React+Redux Stack, which is represented by this repository.
 
-The server side code is written in Python using the Flask RESTful Framework, which can be found  (here)[https://github.com/sebastianfrey/geoio-server]. 
+The server side code is written in Python using the Flask RESTful Framework, which can be found [here](https://github.com/sebastianfrey/geoio-server). 
 
 
 # TODOS
