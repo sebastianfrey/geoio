@@ -58,26 +58,33 @@ export default class GeometryProcessingForm extends React.Component {
   handleSubmit(event) {
     const { onSubmit } = this.props;
     const { process } = this.refs;
-    const { store } = this.context;
 
     if (process && process.run) {
-      store.dispatch(processingStarted())
-      process.run()
-        .catch((e) => {
-          store.dispatch(Notifications.error({
-            title: "Processing error",
-            message: e.message,
-            position: "br"
-          }));
-        })
-        .always(() => {
-          store.dispatch(processingStopped())
-        });
+      this.callRun(process);
     }
 
     if (onSubmit)
     {
       onSubmit();
+    }
+  }
+
+  async callRun(process) {
+    const { store } = this.context;
+
+    if (process && process.run) {
+      store.dispatch(processingStarted())
+      try {
+        await process.run();
+      } catch (e) {
+        store.dispatch(Notifications.error({
+          title: "Processing error",
+          message: e.message,
+          position: "br"
+        }));
+      } finally {
+        store.dispatch(processingStopped())
+      }
     }
   }
 

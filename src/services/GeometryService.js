@@ -7,5 +7,17 @@ axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded
 export function convexHull(collection) {
   return axios.post("/convexHull", {
     collection
+  }).then((result) => {
+    let { error } = result && result.data;
+
+/*     if (typeof error === "string") {
+      error = JSON.parse(error);
+    } */
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    return result.data;
   });
 }

@@ -57,16 +57,16 @@ export default class ConvexHull extends React.Component {
         
     let layer = layers.find(l => l.id === source);
 
-    let result = await convexHull({
+    let geometry = await convexHull({
       type: "FeatureCollection",
       features: layer.data
     })
 
-    result.data.coordinates = [result.data.coordinates];
+    geometry.coordinates = [geometry.coordinates];
 
     store.dispatch(addLayer(featureSetToLayer({
       layer: "convex_hull",
-      features: [{ geometry: result.data, properties: {}, type: "Feature"}],
+      features: [{ geometry: geometry, properties: {}, type: "Feature"}],
       geometryType: "Polygon",
       extent: {xmin:0,ymin:0,xmax:0,ymax:0}
     })));
